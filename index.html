@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranch Field Activity Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS & JS for interactive maps with polygons -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        ranch: {
+                            dark: '#1B4332',
+                            green: '#2D6A4F',
+                            light: '#52B788',
+                            pale: '#95D5B2',
+                            sand: '#F5E6D3',
+                            brown: '#8B5A2B',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-ranch-dark to-ranch-green shadow-xl">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-black text-white">🌾 Ranch Field Activity Monitor</h1>
+                    <p class="text-ranch-pale mt-1 text-lg">Real-time Work Progress Tracker</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-white text-sm font-medium" id="current-date"></p>
+                    <p class="text-ranch-pale text-xs" id="current-time"></p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Overall Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-ranch-green">
+                <p class="text-sm text-gray-600 font-medium">Total Fields</p>
+                <p class="text-5xl font-black text-ranch-dark mt-2" id="total-fields">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-ranch-light">
+                <p class="text-sm text-gray-600 font-medium">Active Fields</p>
+                <p class="text-5xl font-black text-ranch-green mt-2" id="active-fields">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-ranch-brown">
+                <p class="text-sm text-gray-600 font-medium">Completed Fields</p>
+                <p class="text-5xl font-black text-ranch-brown mt-2" id="completed-fields">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-ranch-green to-ranch-light rounded-xl shadow-lg p-6 text-white">
+                <p class="text-sm font-medium opacity-90">Overall Progress</p>
+                <p class="text-5xl font-black mt-2" id="overall-progress">0%</p>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">📍 Ranch Map Overview</h2>
+                <a id="maps-link" href="#" target="_blank" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                    🗺️ Open in Google Maps
+                </a>
+            </div>
+            <div id="map" style="height: 550px; z-index: 1;" class="rounded-lg border-2 border-gray-200 relative">
+                <!-- Legend -->
+                <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-[1000]">
+                    <p class="text-xs font-bold text-gray-800 mb-2">Field Status:</p>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 bg-green-500 rounded"></span>
+                            <span>Completed (100%)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 bg-yellow-500 rounded"></span>
+                            <span>In Progress (1-99%)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 bg-red-500 rounded"></span>
+                            <span>Not Started (0%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Field Form -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">➕ Add New Field</h2>
+            <form id="field-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Field Name</label>
+                        <input type="text" id="field-name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ranch-green focus:border-transparent"
+                               placeholder="e.g., Field A">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Total Area (acres)</label>
+                        <input type="number" step="0.1" id="field-area" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ranch-green focus:border-transparent"
+                               placeholder="10.5">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Field Coordinates (Rectangle)</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-600">SW Lat</label>
+                            <input type="number" step="0.0001" id="sw-lat" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ranch-green"
+                                   placeholder="20.5888">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">SW Lng</label>
+                            <input type="number" step="0.0001" id="sw-lng" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ranch-green"
+                                   placeholder="-100.3850">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">NE Lat</label>
+                            <input type="number" step="0.0001" id="ne-lat" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ranch-green"
+                                   placeholder="20.5920">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">NE Lng</label>
+                            <input type="number" step="0.0001" id="ne-lng" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ranch-green"
+                                   placeholder="-100.3820">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">💡 Define the southwest and northeast corners of the field rectangle</p>
+                </div>
+
+                <button type="submit" 
+                        class="bg-ranch-green hover:bg-ranch-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                    Add Field
+                </button>
+            </form>
+        </div>
+
+        <!-- Fields Grid -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-black text-gray-800 mb-6">📊 Fields Progress</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="fields-grid">
+                <!-- Field cards will be dynamically inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-sm">&copy; 2026 Ranch Field Activity Monitor</p>
+        </div>
+    </footer>
+
+    <!-- Activity Update Modal -->
+    <div id="activity-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-bold text-gray-800" id="modal-title">Update Field Activities</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="modal-content" class="space-y-4">
+                <!-- Activity checkboxes will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Activities list
+        const ACTIVITIES = [
+            { id: 'wire_removal', name: 'Wire Removal', icon: '🔌' },
+            { id: 'hose_removal', name: 'Hose Removal', icon: '🚿' },
+            { id: 'cutting_post_wire', name: 'Cutting Post Wire', icon: '✂️' },
+            { id: 'post_removal', name: 'Post Removal', icon: '🪵' },
+            { id: 'plant_removal', name: 'Plant Removal', icon: '🌱' },
+            { id: 'cleaning', name: 'Cleaning', icon: '🧹' },
+            { id: 'ready_to_burn', name: 'Ready to Burn', icon: '🔥' },
+            { id: 'ready_to_collect', name: 'Ready to Collect', icon: '📦' }
+        ];
+
+        // Real fields data from KML
+        let fields = [
+            {
+                id: 1,
+                name: 'Chuyita 2',
+                area: 48.5,
+                polygon: [
+                    [36.2748819258431, -121.2482101683968],
+                    [36.27310147166136, -121.2458575520293],
+                    [36.27655842678505, -121.2419820040762],
+                    [36.27841716741344, -121.2442161947929],
+                    [36.2748819258431, -121.2482101683968]
+                ],
+                swLat: 36.2731,
+                swLng: -121.2482,
+                neLat: 36.2784,
+                neLng: -121.2420,
+                activities: {
+                    'wire_removal': 100,
+                    'hose_removal': 85,
+                    'cutting_post_wire': 60,
+                    'post_removal': 45,
+                    'plant_removal': 30,
+                    'cleaning': 0,
+                    'ready_to_burn': 0,
+                    'ready_to_collect': 0
+                }
+            },
+            {
+                id: 2,
+                name: 'Field 1',
+                area: 12.3,
+                polygon: [
+                    [36.25929576986162, -121.1924982448581],
+                    [36.25889108015773, -121.1933004723734],
+                    [36.25547230855084, -121.191638891949],
+                    [36.25590388194136, -121.1907896997263],
+                    [36.25929576986162, -121.1924982448581]
+                ],
+                swLat: 36.2555,
+                swLng: -121.1933,
+                neLat: 36.2593,
+                neLng: -121.1908,
+                activities: {
+                    'wire_removal': 0,
+                    'hose_removal': 0,
+                    'cutting_post_wire': 0,
+                    'post_removal': 0,
+                    'plant_removal': 0,
+                    'cleaning': 0,
+                    'ready_to_burn': 0,
+                    'ready_to_collect': 0
+                }
+            },
+            {
+                id: 3,
+                name: 'Field 2',
+                area: 15.7,
+                polygon: [
+                    [36.25939563622435, -121.192604413168],
+                    [36.26124641787686, -121.1934237704818],
+                    [36.26094898977864, -121.194314818718],
+                    [36.25901262040459, -121.1933531105449],
+                    [36.25939563622435, -121.192604413168]
+                ],
+                swLat: 36.2590,
+                swLng: -121.1943,
+                neLat: 36.2612,
+                neLng: -121.1926,
+                activities: {
+                    'wire_removal': 0,
+                    'hose_removal': 0,
+                    'cutting_post_wire': 0,
+                    'post_removal': 0,
+                    'plant_removal': 0,
+                    'cleaning': 0,
+                    'ready_to_burn': 0,
+                    'ready_to_collect': 0
+                }
+            },
+            {
+                id: 4,
+                name: 'Field 3',
+                area: 22.1,
+                polygon: [
+                    [36.26128717901112, -121.1857276190716],
+                    [36.25997130711815, -121.1856411252023],
+                    [36.25898116020275, -121.1852392162161],
+                    [36.26070554132293, -121.1821249189041],
+                    [36.26106929179413, -121.1822995606729],
+                    [36.26171744523524, -121.1811370941148],
+                    [36.26217890358628, -121.1813721152866],
+                    [36.26328325421113, -121.1822600700712],
+                    [36.26128717901112, -121.1857276190716]
+                ],
+                swLat: 36.2590,
+                swLng: -121.1857,
+                neLat: 36.2633,
+                neLng: -121.1811,
+                activities: {
+                    'wire_removal': 0,
+                    'hose_removal': 0,
+                    'cutting_post_wire': 0,
+                    'post_removal': 0,
+                    'plant_removal': 0,
+                    'cleaning': 0,
+                    'ready_to_burn': 0,
+                    'ready_to_collect': 0
+                }
+            },
+            {
+                id: 5,
+                name: 'Field 4',
+                area: 18.4,
+                polygon: [
+                    [36.25230201959292, -121.2122775393801],
+                    [36.2520077256657, -121.2119694041299],
+                    [36.25178365591918, -121.2118775844964],
+                    [36.25137042344626, -121.2125782738386],
+                    [36.25185780452583, -121.2131549955032],
+                    [36.25092887831053, -121.2147473555935],
+                    [36.24667204704262, -121.2090552494298],
+                    [36.25255934797489, -121.2118843832761],
+                    [36.25230201959292, -121.2122775393801]
+                ],
+                swLat: 36.2467,
+                swLng: -121.2147,
+                neLat: 36.2526,
+                neLng: -121.2091,
+                activities: {
+                    'wire_removal': 0,
+                    'hose_removal': 0,
+                    'cutting_post_wire': 0,
+                    'post_removal': 0,
+                    'plant_removal': 0,
+                    'cleaning': 0,
+                    'ready_to_burn': 0,
+                    'ready_to_collect': 0
+                }
+            }
+        ];
+
+        // Leaflet map instance
+        let map = null;
+        let fieldMarkers = [];
+
+        // Calculate field overall progress
+        function calculateFieldProgress(field) {
+            const activities = Object.values(field.activities);
+            const total = activities.reduce((sum, val) => sum + val, 0);
+            return Math.round(total / activities.length);
+        }
+
+        // Get color based on progress
+        function getProgressColor(progress) {
+            if (progress === 0) return 'text-gray-500';
+            if (progress < 30) return 'text-red-600';
+            if (progress < 70) return 'text-yellow-600';
+            if (progress < 100) return 'text-ranch-light';
+            return 'text-green-600';
+        }
+
+        function getProgressBg(progress) {
+            if (progress === 0) return 'from-gray-100 to-gray-200';
+            if (progress < 30) return 'from-red-100 to-red-200';
+            if (progress < 70) return 'from-yellow-100 to-yellow-200';
+            if (progress < 100) return 'from-ranch-pale to-ranch-light';
+            return 'from-green-100 to-green-200';
+        }
+
+        function getProgressBarColor(progress) {
+            if (progress === 0) return 'bg-gray-400';
+            if (progress < 30) return 'bg-gradient-to-r from-red-500 to-red-400';
+            if (progress < 70) return 'bg-gradient-to-r from-yellow-500 to-yellow-400';
+            if (progress < 100) return 'bg-gradient-to-r from-ranch-green to-ranch-light';
+            return 'bg-gradient-to-r from-green-500 to-green-600';
+        }
+
+        // Render field cards
+        function renderFields() {
+            const grid = document.getElementById('fields-grid');
+            grid.innerHTML = '';
+
+            fields.forEach(field => {
+                const progress = calculateFieldProgress(field);
+                const centerLat = (field.swLat + field.neLat) / 2;
+                const centerLng = (field.swLng + field.neLng) / 2;
+
+                const card = `
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all transform hover:-translate-y-1">
+                        <!-- Progress Header -->
+                        <div class="bg-gradient-to-br ${getProgressBg(progress)} p-6 text-center">
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">${field.name}</h3>
+                            <div class="text-7xl font-black ${getProgressColor(progress)} mb-1">
+                                ${progress}<span class="text-4xl">%</span>
+                            </div>
+                            <p class="text-xs text-gray-600 font-medium">${field.area} acres</p>
+                        </div>
+
+                        <!-- Activities -->
+                        <div class="p-4">
+                            <div class="space-y-2">
+                                ${ACTIVITIES.map(activity => {
+                                    const actProgress = field.activities[activity.id] || 0;
+                                    return `
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-700">${activity.icon} ${activity.name}</span>
+                                            <span class="font-bold ${getProgressColor(actProgress)}">${actProgress}%</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                            <div class="h-full rounded-full ${getProgressBarColor(actProgress)} transition-all duration-500" 
+                                                 style="width: ${actProgress}%"></div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Coordinates -->
+                        <div class="px-4 pb-4">
+                            <div class="bg-gray-50 rounded-lg p-3 text-xs">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-gray-700">📍 Coordinates:</span>
+                                    <a href="https://www.google.com/maps?q=${centerLat.toFixed(4)},${centerLng.toFixed(4)}" 
+                                       target="_blank"
+                                       class="text-blue-600 hover:text-blue-700 font-medium">
+                                        View on Map ↗
+                                    </a>
+                                </div>
+                                <div class="grid grid-cols-2 gap-1 font-mono text-gray-600">
+                                    <div>SW: ${field.swLat.toFixed(4)}, ${field.swLng.toFixed(4)}</div>
+                                    <div>NE: ${field.neLat.toFixed(4)}, ${field.neLng.toFixed(4)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="px-4 pb-4 flex gap-2">
+                            <button onclick="openActivityModal(${field.id})" 
+                                    class="flex-1 bg-ranch-green hover:bg-ranch-light text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm">
+                                ✏️ Update Progress
+                            </button>
+                            <button onclick="deleteField(${field.id})" 
+                                    class="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+
+            updateOverallStats();
+            updateMap();
+        }
+
+        // Update overall statistics
+        function updateOverallStats() {
+            document.getElementById('total-fields').textContent = fields.length;
+            
+            const activeFields = fields.filter(f => {
+                const progress = calculateFieldProgress(f);
+                return progress > 0 && progress < 100;
+            }).length;
+            document.getElementById('active-fields').textContent = activeFields;
+
+            const completedFields = fields.filter(f => calculateFieldProgress(f) === 100).length;
+            document.getElementById('completed-fields').textContent = completedFields;
+
+            const overallProgress = fields.length > 0 
+                ? Math.round(fields.reduce((sum, f) => sum + calculateFieldProgress(f), 0) / fields.length)
+                : 0;
+            document.getElementById('overall-progress').textContent = overallProgress + '%';
+        }
+
+        // Update map with field polygons using Leaflet
+        function updateMap() {
+            if (fields.length === 0) return;
+
+            // Initialize map if not already done
+            if (!map) {
+                map = L.map('map').setView([36.2758, -121.2451], 16);
+                
+                // Satellite imagery layer (like Google Earth)
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Esri',
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Add labels overlay
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+                    attribution: '',
+                    maxZoom: 19,
+                    pane: 'overlayPane'
+                }).addTo(map);
+            }
+
+            // Clear existing markers
+            fieldMarkers.forEach(marker => map.removeLayer(marker));
+            fieldMarkers = [];
+
+            // Draw each field polygon
+            fields.forEach(field => {
+                const progress = calculateFieldProgress(field);
+                const color = progress === 100 ? '#22c55e' : progress === 0 ? '#ef4444' : '#eab308';
+                
+                // Draw polygon
+                const polygon = L.polygon(field.polygon, {
+                    color: color,
+                    weight: 3,
+                    fillColor: color,
+                    fillOpacity: 0.3
+                }).addTo(map);
+
+                // Add popup with field info
+                const centerLat = (field.swLat + field.neLat) / 2;
+                const centerLng = (field.swLng + field.neLng) / 2;
+                
+                polygon.bindPopup(`
+                    <div style="font-family: Inter, sans-serif; min-width: 200px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">${field.name}</h3>
+                        <div style="font-size: 32px; font-weight: 900; color: ${color}; margin: 8px 0;">${progress}%</div>
+                        <p style="font-size: 12px; color: #666;">Area: ${field.area} acres</p>
+                        <a href="https://www.google.com/maps?q=${centerLat.toFixed(4)},${centerLng.toFixed(4)}" 
+                           target="_blank" 
+                           style="display: inline-block; margin-top: 8px; color: #2563eb; font-size: 12px; text-decoration: none;">
+                           📍 View in Google Maps
+                        </a>
+                    </div>
+                `);
+
+                // Add label at center
+                const label = L.marker([(field.swLat + field.neLat) / 2, (field.swLng + field.neLng) / 2], {
+                    icon: L.divIcon({
+                        className: 'field-label',
+                        html: `<div style="
+                            background: ${color};
+                            color: white;
+                            padding: 4px 12px;
+                            border-radius: 12px;
+                            font-weight: 800;
+                            font-size: 14px;
+                            white-space: nowrap;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            font-family: Inter, sans-serif;
+                        ">${field.name}<br>${progress}%</div>`,
+                        iconSize: [80, 40],
+                        iconAnchor: [40, 20]
+                    })
+                }).addTo(map);
+
+                fieldMarkers.push(polygon, label);
+            });
+
+            // Fit bounds to show all fields
+            const bounds = L.latLngBounds(fields.flatMap(f => f.polygon));
+            map.fitBounds(bounds, { padding: [50, 50] });
+
+            // Update Google Maps link
+            const centerLat = fields.reduce((sum, f) => sum + (f.swLat + f.neLat) / 2, 0) / fields.length;
+            const centerLng = fields.reduce((sum, f) => sum + (f.swLng + f.neLng) / 2, 0) / fields.length;
+            document.getElementById('maps-link').href = 
+                `https://www.google.com/maps?q=${centerLat.toFixed(4)},${centerLng.toFixed(4)}`;
+        }
+
+        // Open activity modal
+        function openActivityModal(fieldId) {
+            const field = fields.find(f => f.id === fieldId);
+            if (!field) return;
+
+            document.getElementById('modal-title').textContent = `Update: ${field.name}`;
+            
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <div class="space-y-4">
+                    ${ACTIVITIES.map(activity => {
+                        const currentProgress = field.activities[activity.id] || 0;
+                        return `
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl">${activity.icon}</span>
+                                        <span class="font-semibold text-gray-800">${activity.name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="range" 
+                                               id="activity-${activity.id}" 
+                                               min="0" 
+                                               max="100" 
+                                               value="${currentProgress}"
+                                               class="w-40 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                               oninput="updateSliderValue('${activity.id}', this.value)">
+                                        <span class="text-lg font-black ${getProgressColor(currentProgress)} w-12 text-right" 
+                                              id="value-${activity.id}">${currentProgress}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button onclick="closeModal()" 
+                            class="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="saveActivities(${fieldId})" 
+                            class="px-6 py-2 bg-ranch-green hover:bg-ranch-light text-white rounded-lg font-semibold transition-colors">
+                        Save Changes
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('activity-modal').classList.remove('hidden');
+        }
+
+        function updateSliderValue(activityId, value) {
+            document.getElementById(`value-${activityId}`).textContent = value + '%';
+        }
+
+        function saveActivities(fieldId) {
+            const field = fields.find(f => f.id === fieldId);
+            if (!field) return;
+
+            ACTIVITIES.forEach(activity => {
+                const value = document.getElementById(`activity-${activity.id}`).value;
+                field.activities[activity.id] = parseInt(value);
+            });
+
+            closeModal();
+            renderFields();
+        }
+
+        function closeModal() {
+            document.getElementById('activity-modal').classList.add('hidden');
+        }
+
+        // Delete field
+        function deleteField(fieldId) {
+            if (confirm('Are you sure you want to delete this field?')) {
+                fields = fields.filter(f => f.id !== fieldId);
+                renderFields();
+            }
+        }
+
+        // Add new field
+        document.getElementById('field-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newField = {
+                id: Date.now(),
+                name: document.getElementById('field-name').value,
+                area: parseFloat(document.getElementById('field-area').value),
+                swLat: parseFloat(document.getElementById('sw-lat').value),
+                swLng: parseFloat(document.getElementById('sw-lng').value),
+                neLat: parseFloat(document.getElementById('ne-lat').value),
+                neLng: parseFloat(document.getElementById('ne-lng').value),
+                activities: {
+                    'wire_removal': 0,
+                    'hose_removal': 0,
+                    'cutting_post_wire': 0,
+                    'post_removal': 0,
+                    'plant_removal': 0,
+                    'cleaning': 0,
+                    'ready_to_burn': 0,
+                    'ready_to_collect': 0
+                }
+            };
+
+            // Validate coordinates
+            if (newField.swLat >= newField.neLat || newField.swLng >= newField.neLng) {
+                alert('⚠️ Southwest coordinates must be less than Northeast coordinates');
+                return;
+            }
+
+            fields.push(newField);
+            renderFields();
+            this.reset();
+            alert('✅ Field added successfully!');
+        });
+
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US');
+        }
+
+        // Close modal on outside click
+        document.getElementById('activity-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        renderFields();
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Fix map rendering after load
+        setTimeout(() => {
+            if (map) map.invalidateSize();
+        }, 500);
+    </script>
+</body>
+</html>
