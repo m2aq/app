@@ -1,9 +1,9 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
-const BIGHORN_IMAGE = "/custom/specialties-bighorn.jpg";
-const MULE_DEER_IMAGE = "/custom/specialties-mule-deer.jpg";
-const COUES_DEER_IMAGE = "/custom/specialties-coues-deer.jpg";
+const BIGHORN_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-bighorn.jpg`;
+const MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-mule-deer.jpg`;
+const COUES_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-coues-deer.jpg`;
 
 const hunts = [
   {

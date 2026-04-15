@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 // Generamos el array de imágenes (1 al 28)
-const images = Array.from({ length: 28 }, (_, i) => `/album/photo-${i + 1}.jpg`);
+const images = Array.from(
+  { length: 28 },
+  (_, i) => `${import.meta.env.BASE_URL}album/photo-${i + 1}.jpg`
+);
 
 const GalleryPreview = () => {
   const ref = useRef<HTMLDivElement>(null);

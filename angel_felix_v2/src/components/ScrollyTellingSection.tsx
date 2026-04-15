@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-const SCROLLY_MULE_DEER_IMAGE = "/custom/scrolly-mule-deer.jpg";
+const SCROLLY_MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/scrolly-mule-deer.jpg`;
 
 gsap.registerPlugin(ScrollTrigger);
 

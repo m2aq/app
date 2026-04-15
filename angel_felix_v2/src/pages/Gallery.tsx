@@ -11,7 +11,10 @@ const Gallery = () => {
 
   useEffect(() => {
     // Generar array y barajarlo (ahora 28 fotos)
-    const images = Array.from({ length: 28 }, (_, i) => `/album/photo-${i + 1}.jpg`);
+    const images = Array.from(
+      { length: 28 },
+      (_, i) => `${import.meta.env.BASE_URL}album/photo-${i + 1}.jpg`
+    );
     const shuffled = [...images].sort(() => Math.random() - 0.5);
     setShuffledImages(shuffled);
     
