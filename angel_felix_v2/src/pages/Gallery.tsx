@@ -5,15 +5,18 @@ import { ArrowLeft } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import BookingModal from "@/components/BookingModal";
 
+const GALLERY_FILES = [
+  ...Array.from({ length: 34 }, (_, i) => `photo-${i + 1}.jpg`),
+  "photo-35.jpeg",
+];
+
 const Gallery = () => {
   const [shuffledImages, setShuffledImages] = useState<string[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   useEffect(() => {
-    // Generar array y barajarlo (ahora 28 fotos)
-    const images = Array.from(
-      { length: 28 },
-      (_, i) => `${import.meta.env.BASE_URL}album/photo-${i + 1}.jpg`
+    const images = GALLERY_FILES.map(
+      (fileName) => `${import.meta.env.BASE_URL}album/${fileName}`
     );
     const shuffled = [...images].sort(() => Math.random() - 0.5);
     setShuffledImages(shuffled);
@@ -52,16 +55,15 @@ const Gallery = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.05 }}
-                    className="relative overflow-hidden rounded-lg group aspect-[4/5]"
+                    className="relative h-[22rem] overflow-hidden rounded-lg border border-white/10 bg-black/40 p-3 sm:h-[20rem] lg:h-[19rem]"
                 >
-                    <img 
-                        src={src} 
-                        alt={`Experience ${index}`} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                        <div className="h-0.5 w-8 bg-primary transition-all duration-500 group-hover:w-full" />
+                    <div className="flex h-full w-full items-center justify-center rounded-md bg-black/25">
+                      <img 
+                          src={src} 
+                          alt={`Experience ${index + 1}`} 
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                      />
                     </div>
                 </motion.div>
             ))}

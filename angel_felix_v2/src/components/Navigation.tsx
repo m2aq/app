@@ -1,6 +1,6 @@
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from "react";
-import logo from "@/assets/logo-new.jpg";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface NavigationProps {
   onBookNow: () => void;
@@ -10,6 +10,8 @@ const Navigation = ({ onBookNow }: NavigationProps) => {
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious() ?? 0;
@@ -20,6 +22,15 @@ const Navigation = ({ onBookNow }: NavigationProps) => {
     }
     setScrolled(latest > window.innerHeight); // Solo activar fondo sólido cuando pasamos la intro completa
   });
+
+  const scrollToSection = (sectionId: string) => {
+    if (location.pathname === "/") {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    navigate("/", { state: { scrollTo: sectionId } });
+  };
 
   return (
     <motion.nav
@@ -39,14 +50,15 @@ const Navigation = ({ onBookNow }: NavigationProps) => {
         {/* Center column (Links) */}
         <div className="hidden items-center justify-center gap-8 md:flex mix-blend-difference">
           {["Hunts", "About", "Contact"].map((item) => (
-            <motion.a
+            <motion.button
               key={item}
-              href={`#${item.toLowerCase()}`}
+              type="button"
+              onClick={() => scrollToSection(item.toLowerCase())}
               className="font-body text-xs uppercase tracking-widest text-white transition-colors hover:text-primary"
               whileHover={{ y: -2 }}
             >
               {item}
-            </motion.a>
+            </motion.button>
           ))}
         </div>
 

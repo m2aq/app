@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import ScrollyTellingSection from "@/components/ScrollyTellingSection";
@@ -11,11 +12,26 @@ import BookingModal from "@/components/BookingModal";
 const Index = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedHunt, setSelectedHunt] = useState("General Deposit");
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const openBooking = (huntName: string = "General Deposit") => {
     setSelectedHunt(huntName);
     setIsBookingOpen(true);
   };
+
+  useEffect(() => {
+    const state = location.state as { scrollTo?: string } | null;
+    const sectionId = state?.scrollTo;
+
+    if (!sectionId) return;
+
+    requestAnimationFrame(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    navigate("/", { replace: true, state: null });
+  }, [location.state, navigate]);
 
   return (
     <main className="bg-background">
