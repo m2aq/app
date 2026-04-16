@@ -108,6 +108,38 @@ const AboutSection = () => {
             </div>
           </div>
 
+          <div className="mx-auto mt-16 max-w-4xl text-left">
+            <p className="font-body text-xs uppercase tracking-[0.3em] text-primary md:text-sm">
+              What to expect
+            </p>
+            <h3 className="mt-3 font-display text-4xl font-medium text-foreground md:text-5xl lg:text-6xl">
+              All-Inclusive Hunting Experience
+            </h3>
+            <p className="mt-6 font-body text-base leading-8 text-muted-foreground md:text-lg">
+              Our hunts are designed for discerning clients who expect a seamless, high-end experience from arrival to departure. Every detail is handled so you can focus entirely on the hunt.
+            </p>
+            <ul className="mt-8 space-y-4 font-body text-base leading-8 text-muted-foreground md:text-lg">
+              <li>
+                <span className="text-foreground">Private 1:1 Professional Guide:</span> Each hunter is paired with a dedicated, highly experienced guide, ensuring a personalized strategy and maximum opportunity on every stalk.
+              </li>
+              <li>
+                <span className="text-foreground">Dedicated Field Driver:</span> A professional driver is assigned to your hunt, allowing for efficient, comfortable, and uninterrupted access to prime terrain.
+              </li>
+              <li>
+                <span className="text-foreground">Private Ranch Chef:</span> Enjoy freshly prepared, high-quality meals daily, tailored to fuel long days in the field.
+              </li>
+              <li>
+                <span className="text-foreground">VIP Airport Transfers:</span> Seamless round-trip transportation from Hermosillo International Airport (HMO) directly to our private ranches.
+              </li>
+              <li>
+                <span className="text-foreground">Premium Meals &amp; Beverages:</span> All meals and non-alcoholic beverages are included throughout your stay.
+              </li>
+              <li>
+                <span className="text-foreground">6 Full Days of Hunting:</span> Maximize your investment with six complete days in the field, targeting world-class game in carefully managed areas.
+              </li>
+            </ul>
+          </div>
+
           <div className="mt-12">
             <p className="font-body text-sm uppercase tracking-[0.3em] text-primary md:text-base">
               LIMITED TAGS AVAILABLE

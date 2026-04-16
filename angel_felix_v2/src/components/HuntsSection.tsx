@@ -13,9 +13,9 @@ const hunts = [
     image: BIGHORN_IMAGE,
   },
   {
-    title: "Mule Deer",
+    title: "Desert Mule Deer",
     subtitle: "Tradition & Elegance",
-    description: "Hunt the iconic Mule Deer in the forests and brush of Sonora. We offer expeditions during the rutting season when bucks are most active.",
+    description: "Hunt the iconic Mule Deer in the desert of Sonora. We offer expeditions during the rutting season when bucks are most active.",
     image: MULE_DEER_IMAGE,
   },
   {

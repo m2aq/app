@@ -6,21 +6,20 @@ import Navigation from "@/components/Navigation";
 import BookingModal from "@/components/BookingModal";
 
 const GALLERY_FILES = [
-  ...Array.from({ length: 34 }, (_, i) => `photo-${i + 1}.jpg`),
+  ...Array.from({ length: 12 }, (_, i) => `photo-${i + 1}.jpg`),
+  ...Array.from({ length: 21 }, (_, i) => `photo-${i + 14}.jpg`),
   "photo-35.jpeg",
+  "photo-36.jpg",
+  "photo-13.jpg",
 ];
 
 const Gallery = () => {
-  const [shuffledImages, setShuffledImages] = useState<string[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const galleryImages = GALLERY_FILES.map(
+    (fileName) => `${import.meta.env.BASE_URL}album/${fileName}`
+  );
 
   useEffect(() => {
-    const images = GALLERY_FILES.map(
-      (fileName) => `${import.meta.env.BASE_URL}album/${fileName}`
-    );
-    const shuffled = [...images].sort(() => Math.random() - 0.5);
-    setShuffledImages(shuffled);
-    
     // Subir al inicio de la página al entrar
     window.scrollTo(0, 0);
   }, []);
@@ -48,7 +47,7 @@ const Gallery = () => {
 
         {/* Uniform Grid instead of Masonry */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {shuffledImages.map((src, index) => (
+            {galleryImages.map((src, index) => (
                 <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
@@ -71,7 +70,7 @@ const Gallery = () => {
       </div>
       
       <footer className="py-20 border-t border-white/10 text-center flex flex-col gap-4 items-center">
-         <p className="text-gray-500 text-xs uppercase tracking-widest">© 2025 Angel Felix Hunting</p>
+         <p className="text-gray-500 text-xs uppercase tracking-widest">&copy; 2025 Angel Felix Outfitter LLC. All rights reserved.</p>
          <a 
             href="https://m2aq.com" 
             target="_blank" 

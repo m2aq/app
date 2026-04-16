@@ -8,6 +8,7 @@ const images = [
     (_, i) => `${import.meta.env.BASE_URL}album/photo-${i + 1}.jpg`
   ),
   `${import.meta.env.BASE_URL}album/photo-35.jpeg`,
+  `${import.meta.env.BASE_URL}album/photo-36.jpg`,
 ];
 
 const GalleryPreview = () => {
