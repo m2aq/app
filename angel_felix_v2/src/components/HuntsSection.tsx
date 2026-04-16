@@ -48,6 +48,7 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: typeof hunts[0]; index: nu
   
   const opacity = useTransform(scrollYProgress, [0, 0.4], [0, 1]);
   const scale = useTransform(scrollYProgress, [0, 0.4], [0.8, 1]);
+  const isMuleDeer = hunt.image === MULE_DEER_IMAGE;
 
   return (
     <div
@@ -63,13 +64,21 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: typeof hunts[0]; index: nu
           scale 
         }}
       >
-        <div className="relative aspect-[4/3] overflow-hidden rounded-lg shadow-2xl">
+        <div
+          className={`relative overflow-hidden rounded-lg shadow-2xl ${
+            isMuleDeer ? "" : "aspect-[4/3]"
+          }`}
+        >
           <img
             src={hunt.image}
             alt={hunt.title}
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-110"
+            className={`h-full w-full transition-transform duration-700 ${
+              isMuleDeer ? "h-auto object-contain" : "object-cover hover:scale-110"
+            }`}
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          {!isMuleDeer && (
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          )}
         </div>
       </motion.div>
 
