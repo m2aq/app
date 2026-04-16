@@ -4,6 +4,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 const SCROLLY_MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/scrolly-mule-deer.jpg`;
+const IMAGE_OBJECT_POSITION = "50% 50%";
+const IMAGE_ZOOM_ORIGIN = "50% 85%";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -96,14 +98,18 @@ const ScrollyTellingSection = () => {
           src={SCROLLY_MULE_DEER_IMAGE}
           alt="Mule Deer"
           className="absolute h-full w-full object-cover opacity-80"
-          style={{ willChange: "transform" }}
+          style={{
+            willChange: "transform",
+            objectPosition: IMAGE_OBJECT_POSITION,
+            transformOrigin: IMAGE_ZOOM_ORIGIN,
+          }}
         />
 
         {/* OVERLAY MIRA TELESCOPICA (SCOPE) */}
         <div 
           ref={scopeRef} 
           className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center opacity-0"
-          style={{ transform: 'scale(1.2)' }}
+          style={{ transform: "scale(1.2)" }}
         >
            {/* Círculo exterior borroso */}
            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_25%,black_70%)]" />

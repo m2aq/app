@@ -27,7 +27,7 @@ const ContactSection = () => {
         <motion.img
           src={logo}
           alt="Angel Felix Outfitter"
-          className="mx-auto mb-8 h-20 w-auto opacity-60"
+          className="mx-auto mb-8 h-72 w-auto opacity-60 md:h-[22rem]"
           style={{ opacity: useTransform(scrollYProgress, [0, 0.3], [0, 0.6]), scale }}
         />
 
@@ -57,9 +57,15 @@ const ContactSection = () => {
               </a>
             </div>
             <div>
-              <p className="font-body text-sm uppercase tracking-widest text-muted-foreground">Phone</p>
-              <a href="tel:+526621234567" className="font-display text-2xl text-foreground transition-colors hover:text-primary">
-                +52 662 123 4567
+              <p className="font-body text-sm uppercase tracking-widest text-muted-foreground">US Phone Number</p>
+              <a href="tel:+14802510258" className="font-display text-2xl text-foreground transition-colors hover:text-primary">
+                480 251 0258
+              </a>
+            </div>
+            <div>
+              <p className="font-body text-sm uppercase tracking-widest text-muted-foreground">MX Phone Number</p>
+              <a href="tel:+526621995518" className="font-display text-2xl text-foreground transition-colors hover:text-primary">
+                +52 662 199 5518
               </a>
             </div>
             <div>
@@ -82,7 +88,7 @@ const ContactSection = () => {
           style={{ opacity: contentOpacity }}
         >
           <p className="font-body text-xs uppercase tracking-widest text-muted-foreground">
-            © 2025 Angel Felix Outfitter. All rights reserved.
+            &copy; 2025 Angel Felix Outfitter LLC. All rights reserved.
           </p>
           <a 
             href="https://m2aq.com" 

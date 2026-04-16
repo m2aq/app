@@ -21,7 +21,7 @@ const hunts = [
   {
     title: "Coues Deer",
     subtitle: "Stealth & Precision",
-    description: "The elusive Coues Deer is one of Sonora's most prized and challenging hunts. It demands patience, glassing skill, and precision in rugged terrain.",
+    description: "The elusive Grey Ghost is one of Sonora's most prized and challenging hunts. It demands patience, glassing skill, and precision in rugged terrain.",
     image: COUES_DEER_IMAGE,
   },
 ];
