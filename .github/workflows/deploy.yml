@@ -44,12 +44,16 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+      - name: Prepare Pages site
+        run: |
+          mkdir -p ../site/angel_felix_pruebas
+          cp -R dist/. ../site/angel_felix_pruebas/
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './angel_felix_pruebas/dist'
+          path: './site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
