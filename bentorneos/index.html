@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestor de Torneos 2</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #005fcc;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 1rem;
+    }
+
+    h2 {
+      color: #005fcc;
+      margin-top: 2rem;
+    }
+
+    input, button {
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin: 0.5rem 0.5rem 0.5rem 0;
+    }
+
+    .seccion {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 1.5rem;
+    }
+
+    .tabla {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .tabla th, .tabla td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    .match {
+      margin: 0.5rem 0;
+    }
+
+    .bracket {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .ronda {
+      flex: 1;
+    }
+
+    .ronda h3 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .box {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      margin: 0.5rem;
+      text-align: center;
+    }
+
+    .ganador {
+      background: #c8e6c9;
+      border-color: #4caf50;
+      font-weight: bold;
+    }
+
+    .boton-final {
+      text-align: center;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gestor de Torneos</h1>
+  </header>
+  <main>
+    <section class="seccion" id="inscripcion">
+      <h2>1. Inscripción</h2>
+      <input type="text" id="nombre" placeholder="Nombre del participante"/>
+      <button onclick="agregarParticipante()">Agregar</button>
+      <ul id="listaParticipantes"></ul>
+      <button onclick="iniciarGrupos()" id="btnIniciarGrupos" disabled>Iniciar Fase de Grupos</button>
+    </section>
+
+    <section class="seccion" id="grupos" style="display:none;">
+      <h2>2. Fase de Grupos</h2>
+      <div id="partidos"></div>
+      <h3>Tabla de Posiciones</h3>
+      <table class="tabla">
+        <thead>
+          <tr><th>#</th><th>Nombre</th><th>Pts</th><th>V</th><th>D</th></tr>
+        </thead>
+        <tbody id="tablaPosiciones"></tbody>
+      </table>
+      <button onclick="iniciarEliminatorias()" id="btnEliminatorias" disabled>Iniciar Eliminatorias</button>
+    </section>
+
+    <section class="seccion" id="eliminatorias" style="display:none;">
+      <h2>3. Eliminación Directa</h2>
+      <div class="bracket" id="bracket"></div>
+    </section>
+
+    <div class="boton-final">
+      <button onclick="reiniciar()">🔁 Nuevo Torneo</button>
+    </div>
+  </main>
+
+  <script>
+    let participantes = [];
+    let resultados = {};
+    let partidos = [];
+    let rondaActual = [];
+
+    function agregarParticipante() {
+      const nombre = document.getElementById("nombre").value.trim();
+      if (nombre && !participantes.includes(nombre)) {
+        participantes.push(nombre);
+        const li = document.createElement("li");
+        li.textContent = nombre;
+        document.getElementById("listaParticipantes").appendChild(li);
+        document.getElementById("nombre").value = "";
+        if (participantes.length >= 2) {
+          document.getElementById("btnIniciarGrupos").disabled = false;
+        }
+      }
+    }
+
+    function iniciarGrupos() {
+      document.getElementById("inscripcion").style.display = "none";
+      document.getElementById("grupos").style.display = "block";
+      partidos = [];
+      for (let i = 0; i < participantes.length; i++) {
+        for (let j = i + 1; j < participantes.length; j++) {
+          partidos.push([participantes[i], participantes[j]]);
+        }
+      }
+      resultados = {};
+      participantes.forEach(p => resultados[p] = { pts: 0, v: 0, d: 0 });
+      actualizarPartidos();
+    }
+
+    function actualizarPartidos() {
+      const contenedor = document.getElementById("partidos");
+      contenedor.innerHTML = "";
+      partidos.forEach((p, i) => {
+        const div = document.createElement("div");
+        div.className = "match";
+        div.innerHTML = `${p[0]} vs ${p[1]} 
+          <button onclick="rVictoria(${i}, 0)">Gana ${p[0]}</button>
+          <button onclick="rVictoria(${i}, 1)">Gana ${p[1]}</button>`;
+        contenedor.appendChild(div);
+      });
+    }
+
+function registrarVictoria(index, ganador) {
+  const [p1, p2] = partidos[index];
+  const ganadorNombre = ganador === 0 ? p1 : p2;
+  const perdedorNombre = ganador === 0 ? p2 : p1;
+
+  resultados[ganadorNombre].pts += 2;
+  resultados[ganadorNombre].v += 1;
+  resultados[perdedorNombre].d += 1;
+
+  partidos.splice(index, 1);
+  actualizarPartidos();
+  actualizarTabla();
+
+  if (partidos.length === 0) {
+    const cantidad = participantes.length;
+    let maxClasificados = 1;
+    while (maxClasificados * 2 <= cantidad) {
+      maxClasificados *= 2;
+    }
+
+    if (maxClasificados >= 2) {
+      document.getElementById("btnEliminatorias").disabled = false;
+    }
+
+    const ordenados = Object.entries(resultados)
+      .sort((a, b) => b[1].pts - a[1].pts)
+      .map(e => e[0]);
+
+    const clasificados = ordenados.slice(0, maxClasificados);
+    const eliminados = ordenados.slice(maxClasificados);
+
+    // Actualiza la lista de participantes y resultados con solo los clasificados
+    participantes = [...clasificados];
+    const nuevosResultados = {};
+    clasificados.forEach(p => {
+      nuevosResultados[p] = resultados[p];
+    });
+    resultados = nuevosResultados;
+
+    if (eliminados.length > 0) {
+      alert("Participantes eliminados por exceso:\n" + eliminados.map(e => " - " + e).join("\n"));
+    }
+
+    actualizarTabla();
+  }
+}
+
+
+
+    function actualizarTabla() {
+      const cuerpo = document.getElementById("tablaPosiciones");
+      cuerpo.innerHTML = "";
+      const ordenados = Object.entries(resultados).sort((a,b) => b[1].pts - a[1].pts);
+      ordenados.forEach(([nombre, stats], i) => {
+        const row = `<tr><td>${i+1}</td><td>${nombre}</td><td>${stats.pts}</td><td>${stats.v}</td><td>${stats.d}</td></tr>`;
+        cuerpo.innerHTML += row;
+      });
+    }
+
+    function iniciarEliminatorias() {
+      document.getElementById("grupos").style.display = "none";
+      document.getElementById("eliminatorias").style.display = "block";
+      const bracket = document.getElementById("bracket");
+      bracket.innerHTML = "";
+
+      const ordenados = Object.entries(resultados).sort((a,b) => b[1].pts - a[1].pts).map(e => e[0]);
+      const cantidad = ordenados.length;
+      if (!esPotenciaDeDos(cantidad)) {
+        alert("Solo puedes avanzar si el número de participantes es potencia de 2.");
+        return;
+      }
+
+      const emparejados = [];
+      for (let i = 0; i < cantidad / 2; i++) {
+        emparejados.push([ordenados[i], ordenados[cantidad - 1 - i]]);
+      }
+      rondaActual = emparejados;
+      mostrarRonda(emparejados);
+    }
+
+    function mostrarRonda(parejas) {
+      const bracket = document.getElementById("bracket");
+      const ronda = document.createElement("div");
+      ronda.className = "ronda";
+      ronda.innerHTML = `<h3>Ronda</h3>`;
+      parejas.forEach(([p1, p2]) => {
+        const box = document.createElement("div");
+        box.className = "box";
+        box.innerHTML = `${p1} vs ${p2}<br>
+          <button onclick="avanzar('${p1}', this)">Gana ${p1}</button>
+          <button onclick="avanzar('${p2}', this)">Gana ${p2}</button>`;
+        ronda.appendChild(box);
+      });
+      bracket.appendChild(ronda);
+    }
+
+    function avanzar(ganador, boton) {
+      const box = boton.parentElement;
+      box.innerHTML = `Ganador: ${ganador}`;
+      box.classList.add("ganador");
+
+      const rondaDiv = box.parentElement;
+      const ganadores = Array.from(rondaDiv.querySelectorAll(".ganador")).map(b => b.textContent.replace("Ganador: ", ""));
+      if (ganadores.length * 2 === rondaActual.length * 2) {
+        rondaActual = [];
+        for (let i = 0; i < ganadores.length; i += 2) {
+          if (ganadores[i + 1]) {
+            rondaActual.push([ganadores[i], ganadores[i + 1]]);
+          } else {
+            mostrarCampeon(ganadores[i]);
+            return;
+          }
+        }
+        mostrarRonda(rondaActual);
+      }
+    }
+
+    function mostrarCampeon(nombre) {
+      const bracket = document.getElementById("bracket");
+      const div = document.createElement("div");
+      div.className = "box ganador";
+      div.innerHTML = `🏆 CAMPEÓN: ${nombre}`;
+      bracket.appendChild(div);
+    }
+
+    function esPotenciaDeDos(n) {
+      return n && (n & (n - 1)) === 0;
+    }
+
+    function reiniciar() {
+      location.reload();
+    }
+  </script>
+</body>
+</html>

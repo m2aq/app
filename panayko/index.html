@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carne Seca by Panayko Foods - Sabor Auténtico de Sonora</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ... (todo el resto del CSS que ya tenías, incluido el de las variables :root y los demás estilos) ... */
+
+        /* ESTILOS DE EJEMPLO PARA EL LOGO (si no creas un CSS aparte) */
+        .site-logo {
+            max-width: 250px; /* Ajusta este valor al tamaño de tu logo */
+            height: auto;     /* Mantiene la proporción del logo */
+            display: block;   /* Para que sea un bloque y podamos centrarlo */
+            margin: 0 auto 15px auto; /* Centra el logo y añade espacio debajo */
+            transition: transform 0.3s ease;
+        }
+        header p {
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+        /* ... (restos del CSS que podrías tener inline o en style.css) ... */
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <!-- Aquí va el logo -->
+            <img src="logo-panayko.png" alt="Logo Panayko Foods" class="site-logo">
+            <p>¡El sabor auténtico de Sonora!</p>
+        </div>
+    </header>
+
+    <!-- ... (Todo el resto del body: hero-section, #productos, #pedido, footer, y el script) ... -->
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h2>Descubre la</h2>
+            <h2>Auténtica Carne Seca Sonorense</h2>
+            <p>Elaborada con pasión y los mejores ingredientes.</p>
+        </div>
+    </section>
+
+    <section id="productos" class="container">
+        <h2>Nuestros Productos Premium</h2>
+        <div class="productos-grid">
+            <!-- Producto 1 -->
+            <div class="producto">
+                <img src="carne-seca-ternera.jpg" alt="Carne Seca de Ternera Panayko Foods">
+                <h3>Carne Seca de Ternera</h3>
+                <p>Finamente marinada y curada, un sabor inigualable que recuerda las tradiciones.</p>
+                <p class="precio">$15.00</p>
+                <button class="add-to-cart" onclick="agregarAlCarrito('Carne Seca de Ternera', 15.00)">Añadir al Carrito</button>
+            </div>
+
+            <!-- Producto 2 -->
+            <div class="producto">
+                <img src="carne-seca-cerdo.jpg" alt="Carne Seca de Cerdo Panayko Foods">
+                <h3>Carne Seca de Cerdo Ahumado</h3>
+                <p>Un toque ahumado irresistible y un sabor profundo, perfecto para cualquier ocasión.</p>
+                <p class="precio">$13.50</p>
+                <button class="add-to-cart" onclick="agregarAlCarrito('Carne Seca de Cerdo Ahumado', 13.50)">Añadir al Carrito</button>
+            </div>
+
+            <!-- Producto 3 -->
+            <div class="producto">
+                <img src="carne-seca-mezcla.jpg" alt="Mezcla Especial Carne Seca Panayko Foods">
+                <h3>Mezcla Tradicional Panayko</h3>
+                <p>Una selección especial de nuestros cortes curados, para los paladares más exigentes.</p>
+                <p class="precio">$16.00</p>
+                <button class="add-to-cart" onclick="agregarAlCarrito('Mezcla Tradicional Panayko', 16.00)">Añadir al Carrito</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="pedido" class="container">
+        <div id="cart">
+            <h3>TU SELECCIÓN</h3>
+            <div id="cart-items">
+                <ul>
+                    <!-- Los items del carrito se agregarán aquí dinámicamente -->
+                </ul>
+            </div>
+            <p class="total-price">Total: $0.00</p>
+            <button class="checkout-button" onclick="mostrarFormulario()">Completar Mi Pedido</button>
+        </div>
+
+        <div id="checkout-form">
+            <h3>Completa tus datos</h3>
+            <form id="orderForm">
+                <label for="nombre">Nombre Completo:</label>
+                <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan Pérez">
+
+                <label for="telefono">Teléfono de Contacto:</label>
+                <input type="tel" id="telefono" name="telefono" required placeholder="Ej: +52 55 1234 5678">
+
+                <label for="email">Correo Electrónico (Opcional):</label>
+                <input type="email" id="email" name="email" placeholder="Ej: juan.perez@email.com">
+
+                <label for="direccion">Dirección de Entrega (Opcional):</label>
+                <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle Falsa 123, Col. Centro, CDMX">
+
+                <button type="submit" class="checkout-button">Enviar Pedido</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Carne Seca by Panayko Foods. Todos los derechos reservados.</p>
+            <p>Síguenos en nuestras redes sociales: @PanaykoFoods </p>
+            <!-- Aquí irían enlaces a tus redes sociales -->
+            <!-- <a href="#"><img src="icon-facebook.png" alt="Facebook"></a> -->
+            <!-- <a href="#"><img src="icon-instagram.png" alt="Instagram"></a> -->
+        </div>
+    </footer>
+
+    <script>
+        let carrito = []; // Array para almacenar los items del carrito
+
+        function agregarAlCarrito(nombreProducto, precioProducto) {
+            const itemExistente = carrito.find(item => item.nombre === nombreProducto);
+
+            if (itemExistente) {
+                itemExistente.cantidad++;
+            } else {
+                carrito.push({ nombre: nombreProducto, precio: precioProducto, cantidad: 1 });
+            }
+            actualizarVistaCarrito();
+        }
+
+        function actualizarVistaCarrito() {
+            const cartItemsList = document.querySelector('#cart-items ul');
+            cartItemsList.innerHTML = ''; // Limpiar la lista actual
+
+            let total = 0;
+
+            carrito.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    ${item.nombre} x${item.cantidad} <span class="precio-item">$${(item.precio * item.cantidad).toFixed(2)}</span>
+                `;
+                cartItemsList.appendChild(listItem);
+                total += item.precio * item.cantidad;
+            });
+
+            const totalPriceElement = document.querySelector('.total-price');
+            totalPriceElement.textContent = `Total: $${total.toFixed(2)}`;
+
+            const checkoutButton = document.querySelector('#cart .checkout-button'); // Selecciona el botón dentro del #cart
+            if (carrito.length > 0) {
+                checkoutButton.disabled = false;
+            } else {
+                checkoutButton.disabled = true;
+            }
+        }
+
+        function mostrarFormulario() {
+            const checkoutForm = document.getElementById('checkout-form');
+            checkoutForm.style.display = 'block';
+            checkoutForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const email = document.getElementById('email').value;
+            const direccion = document.getElementById('direccion').value;
+
+            const resumenPedido = generarResumenPedido();
+
+            const mensaje = `Nuevo Pedido - Panayko Foods:\n\n` +
+                            `Cliente: ${nombre}\n` +
+                            `Teléfono: ${telefono}\n` +
+                            `Email: ${email || 'No proporcionado'}\n` +
+                            `Dirección: ${direccion || 'No proporcionada'}\n\n` +
+                            `Detalles del pedido:\n${resumenPedido}`;
+
+            alert("¡Gracias, " + nombre + "!\nTu pedido ha sido recibido. Nos pondremos en contacto pronto.\n\n" + resumenPedido);
+
+            // Limpiar el carrito y reiniciar la interfaz
+            carrito = [];
+            actualizarVistaCarrito();
+            document.getElementById('orderForm').reset();
+            document.getElementById('checkout-form').style.display = 'none'; // Ocultar el formulario de nuevo
+        });
+
+        function generarResumenPedido() {
+            let resumen = '';
+            carrito.forEach(item => {
+                resumen += `- ${item.nombre} (x${item.cantidad}): $${(item.precio * item.cantidad).toFixed(2)}\n`;
+            });
+            const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            resumen += `\nTOTAL: $${total.toFixed(2)}`;
+            return resumen;
+        }
+
+        // Inicializar la vista del carrito y deshabilitar el botón de pago al inicio
+        window.onload = function() {
+            actualizarVistaCarrito();
+        };
+    </script>
+</body>
+</html>

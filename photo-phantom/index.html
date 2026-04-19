@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photo Phantom - Local con Guardar y Copiar</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 10px;
+      margin: 0;
+    }
+    #container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      margin: auto;
+      background: black;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+    }
+    video,
+    img,
+    canvas {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #ghost {
+      opacity: 0.3;
+      z-index: 2;
+      object-fit: contain;
+      transition: opacity 0.3s ease;
+    }
+    canvas {
+      z-index: 3;
+      display: none;
+    }
+    #photo {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #snapBtn,
+    #selectGhostBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background-color: #28a745;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #saveBtn,
+    #copyBtn {
+      margin: 10px 5px 0 5px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #errorMsg {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center">📷 Photo Phantom - Local con Guardar y Copiar</h2>
+
+  <div id="container">
+    <video id="video" autoplay muted playsinline></video>
+    <img
+      id="ghost"
+      src="https://via.placeholder.com/400x300.png?text=Foto+Fantasma"
+      alt="Fantasma"
+    />
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div style="text-align: center">
+    <button id="snapBtn">📸 Tomar Foto</button>
+    <button id="selectGhostBtn">🖼️ Seleccionar foto fantasma</button>
+    <input type="file" id="ghostInput" accept="image/*" style="display: none" />
+    <div id="errorMsg"></div>
+  </div>
+
+  <div id="photo"></div>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const errorMsg = document.getElementById("errorMsg");
+    const snapBtn = document.getElementById("snapBtn");
+    const selectGhostBtn = document.getElementById("selectGhostBtn");
+    const ghostInput = document.getElementById("ghostInput");
+    const ghostImg = document.getElementById("ghost");
+    const photoContainer = document.getElementById("photo");
+
+    async function iniciarCamara() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();
+        };
+      } catch (err) {
+        console.error("Error al acceder a la cámara:", err);
+        errorMsg.textContent = "No se pudo acceder a la cámara: " + err.message;
+      }
+    }
+
+    function takePhoto() {
+      if (!video.videoWidth || !video.videoHeight) {
+        errorMsg.textContent = "La cámara aún no está lista.";
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const photoData = canvas.toDataURL("image/png");
+
+      // Ocultar la imagen fantasma
+      ghostImg.style.opacity = 0;
+
+      // Mostrar la foto tomada y los botones
+      photoContainer.innerHTML = `
+        <img src="${photoData}" width="100%" alt="Foto tomada" />
+        <br/>
+        <button id="saveBtn">💾 Guardar Foto</button>
+        <button id="copyBtn">📋 Copiar al Portapapeles</button>
+      `;
+
+      errorMsg.textContent = "";
+
+      // Botón Guardar
+      document.getElementById("saveBtn").onclick = () => {
+        const link = document.createElement("a");
+        link.href = photoData;
+        link.download = "photo-phantom.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      // Botón Copiar
+      document.getElementById("copyBtn").onclick = async () => {
+        try {
+          const response = await fetch(photoData);
+          const blob = await response.blob();
+          await navigator.clipboard.write([
+            new ClipboardItem({ [blob.type]: blob }),
+          ]);
+          alert("Imagen copiada al portapapeles!");
+        } catch (e) {
+          alert("Error copiando al portapapeles: " + e);
+        }
+      };
+    }
+
+    snapBtn.addEventListener("click", takePhoto);
+
+    selectGhostBtn.addEventListener("click", () => {
+      ghostInput.click();
+    });
+
+    ghostInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        errorMsg.textContent = "Por favor, selecciona un archivo de imagen válido.";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        ghostImg.src = e.target.result;
+        ghostImg.style.opacity = 0.3;
+        errorMsg.textContent = "";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    window.addEventListener("DOMContentLoaded", iniciarCamara);
+  </script>
+</body>
+</html>
