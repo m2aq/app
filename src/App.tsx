@@ -1,4 +1,5 @@
 import Preloader from "@/components/Preloader";
+import SocialDock from "@/components/SocialDock";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <Preloader />
     <TooltipProvider>
+      <SocialDock />
       <Toaster />
       <Sonner />
       <HashRouter>
