@@ -8,6 +8,7 @@ import GalleryPreview from "@/components/GalleryPreview";
 import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
 import BookingModal from "@/components/BookingModal";
+import { trackPageView } from "@/lib/metricsClient";
 
 const Index = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -32,6 +33,10 @@ const Index = () => {
 
     navigate("/", { replace: true, state: null });
   }, [location.state, navigate]);
+
+  useEffect(() => {
+    trackPageView("/").catch(() => {});
+  }, []);
 
   return (
     <main className="bg-background">

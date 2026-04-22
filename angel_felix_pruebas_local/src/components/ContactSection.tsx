@@ -102,7 +102,10 @@ const ContactSection = () => {
             </p>
           </div>
 
-          <p className="font-body text-xs uppercase tracking-widest text-muted-foreground">
+          <p
+            onClick={() => window.dispatchEvent(new Event("af-admin-secret-click"))}
+            className="cursor-default font-body text-xs uppercase tracking-widest text-muted-foreground"
+          >
             &copy; 2025 Angel Felix Outfitter LLC. All rights reserved.
           </p>
           <a 
