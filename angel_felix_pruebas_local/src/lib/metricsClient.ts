@@ -87,8 +87,31 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
 }
 
 async function resolveGeoSnapshot(): Promise<GeoSnapshot> {
+  const language = navigator.language || null;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+
+  const localeCountryCode = language?.match(/[-_]([A-Za-z]{2})$/)?.[1]?.toUpperCase() || null;
+  const countryByCode: Record<string, string> = {
+    MX: "Mexico",
+    US: "United States",
+    CA: "Canada",
+    ES: "Spain",
+    AR: "Argentina",
+    CL: "Chile",
+    CO: "Colombia",
+    PE: "Peru",
+  };
+
+  let inferredCountry = localeCountryCode ? countryByCode[localeCountryCode] || localeCountryCode : null;
+  if (!inferredCountry && timezone) {
+    const tz = timezone.toLowerCase();
+    if (tz.includes("mexico") || tz.includes("hermosillo") || tz.includes("monterrey")) inferredCountry = "Mexico";
+    if (tz.includes("new_york") || tz.includes("los_angeles") || tz.includes("chicago")) inferredCountry = "United States";
+    if (tz.includes("toronto") || tz.includes("vancouver")) inferredCountry = "Canada";
+  }
+
   return {
-    country: null,
+    country: inferredCountry,
     region: null,
     city: null,
     latitude: null,
@@ -122,7 +145,7 @@ export async function trackPageView(pathOverride?: string) {
         },
         body: JSON.stringify(payload),
       }),
-      1800
+      6000
     );
 
     if (!fxResp.ok) throw new Error(`metrics-track failed (${fxResp.status})`);
