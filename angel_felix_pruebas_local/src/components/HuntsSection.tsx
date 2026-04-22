@@ -4,8 +4,18 @@ import { useRef } from "react";
 const BIGHORN_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-bighorn.jpg`;
 const MULE_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-mule-deer.jpg`;
 const COUES_DEER_IMAGE = `${import.meta.env.BASE_URL}custom/specialties-coues-deer.jpg`;
+const ISLA_TIBURON_IMAGE = `${import.meta.env.BASE_URL}custom/isla-tiburon.jpeg`;
 
-const hunts = [
+type HuntItemData = {
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
+const hunts: HuntItemData[] = [
   {
     title: "Desert Bighorn Sheep",
     subtitle: "The Ultimate Trophy",
@@ -24,13 +34,21 @@ const hunts = [
     description: "The elusive Grey Ghost is one of Sonora's most prized and challenging hunts. It demands patience, glassing skill, and precision in rugged terrain.",
     image: COUES_DEER_IMAGE,
   },
+  {
+    title: "Isla Tiburón, Sonora",
+    subtitle: "Hunting Experience",
+    description: "Over the years, I've had the opportunity to hunt in some of the most demanding terrains in Sonora, including Isla Tiburón—one of the most prestigious locations for Desert Bighorn Sheep.\n\nSpending time in this environment taught me what it really takes to pursue these animals: long hours of glassing, understanding the mountains, and respecting every step of the process.\n\nMy experience in this terrain allows me to understand the level of preparation, patience, and precision required to succeed in one of the most challenging and rewarding hunts in North America.\n\nIf you're looking for a real hunting experience—not just a trip—this is it.\nLet's plan your next hunt the right way.",
+    image: ISLA_TIBURON_IMAGE,
+    ctaLabel: "Contact me today",
+    ctaHref: "https://wa.me/14802510258",
+  },
 ];
 
 interface HuntsSectionProps {
   onBookNow: (huntName: string) => void;
 }
 
-const HuntItem = ({ hunt, index, onBookNow }: { hunt: typeof hunts[0]; index: number; onBookNow: (name: string) => void }) => {
+const HuntItem = ({ hunt, index, onBookNow }: { hunt: HuntItemData; index: number; onBookNow: (name: string) => void }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -100,16 +118,27 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: typeof hunts[0]; index: nu
 
         <div className="mb-6 h-px w-24 bg-primary mx-auto" />
 
-        <p className="mb-8 font-body text-base leading-relaxed text-muted-foreground md:text-lg">
+        <p className="mb-8 whitespace-pre-line font-body text-base leading-relaxed text-muted-foreground md:text-lg">
           {hunt.description}
         </p>
 
-        <button
-          onClick={() => onBookNow(hunt.title)}
-          className="inline-block border border-primary/50 px-6 py-3 font-body text-xs uppercase tracking-widest text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          Book Now
-        </button>
+        {hunt.ctaHref ? (
+          <a
+            href={hunt.ctaHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block border border-primary/50 px-6 py-3 font-body text-xs uppercase tracking-widest text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            {hunt.ctaLabel ?? "Contact"}
+          </a>
+        ) : (
+          <button
+            onClick={() => onBookNow(hunt.title)}
+            className="inline-block border border-primary/50 px-6 py-3 font-body text-xs uppercase tracking-widest text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            Book Now
+          </button>
+        )}
       </motion.div>
     </div>
   );

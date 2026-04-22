@@ -97,7 +97,7 @@ const HeroSection = ({ onBookNow }: HeroSectionProps) => {
 
         {/* SCROLL INDICATOR */}
         <motion.div
-          className="absolute bottom-40 left-1/2 z-30 -translate-x-1/2 md:bottom-44"
+          className="absolute bottom-28 left-1/2 z-30 -translate-x-1/2 md:bottom-32"
           style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
         >
           <div className="flex flex-col items-center gap-2">
