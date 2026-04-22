@@ -16,6 +16,41 @@ type VisitPayload = {
   referrer?: string | null;
 };
 
+function normalizeCountry(input: string | null) {
+  if (!input) return null;
+  const value = input.trim();
+  if (!value) return null;
+  if (value.length === 2) {
+    const code = value.toUpperCase();
+    const map: Record<string, string> = {
+      MX: "Mexico",
+      US: "United States",
+      CA: "Canada",
+      ES: "Spain",
+      AR: "Argentina",
+      CL: "Chile",
+      CO: "Colombia",
+      PE: "Peru",
+    };
+    return map[code] || code;
+  }
+  return value;
+}
+
+function inferCountryFromLocale(language: string | null, timezone: string | null) {
+  if (language) {
+    const match = language.match(/[-_]([A-Za-z]{2})$/);
+    if (match?.[1]) return normalizeCountry(match[1]);
+  }
+  if (timezone) {
+    const tz = timezone.toLowerCase();
+    if (tz.includes("mexico") || tz.includes("hermosillo") || tz.includes("monterrey")) return "Mexico";
+    if (tz.includes("new_york") || tz.includes("los_angeles") || tz.includes("chicago")) return "United States";
+    if (tz.includes("toronto") || tz.includes("vancouver")) return "Canada";
+  }
+  return null;
+}
+
 function getClientIp(req: Request) {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -153,11 +188,13 @@ Deno.serve(async (req) => {
     const payload = (await req.json()) as VisitPayload;
     const ip = getClientIp(req);
     const geo = await resolveGeoByIp(req, ip);
+    const inferredCountry = inferCountryFromLocale(payload.language || null, payload.timezone || null);
+    const finalCountry = normalizeCountry(geo.country) || inferredCountry;
 
     const insertData = {
       path: payload.path || "/",
       page_title: payload.page_title || null,
-      country: geo.country,
+      country: finalCountry,
       region: geo.region,
       city: geo.city,
       latitude: geo.latitude,
