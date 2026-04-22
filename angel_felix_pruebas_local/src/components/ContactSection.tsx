@@ -84,7 +84,7 @@ const ContactSection = () => {
 
         {/* Footer */}
         <motion.div
-          className="mt-24 border-t border-border pt-8 text-center flex flex-col gap-4 items-center"
+          className="mt-24 border-t border-border pt-8 pb-28 md:pb-10 text-center flex flex-col gap-4 items-center"
           style={{ opacity: contentOpacity }}
         >
           <div className="mx-auto mt-4 flex max-w-2xl flex-col items-center gap-5 rounded-[2rem] border border-primary/20 bg-black/10 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.22)] backdrop-blur-sm">
@@ -114,7 +114,7 @@ const ContactSection = () => {
             rel="noopener noreferrer"
             className="text-[10px] uppercase tracking-widest text-white/20 hover:text-white/60 transition-colors"
           >
-            Developed by M2AQ
+            Developed by m2aq
           </a>
         </motion.div>
       </div>

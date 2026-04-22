@@ -87,47 +87,23 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
 }
 
 async function resolveGeoSnapshot(): Promise<GeoSnapshot> {
-  try {
-    const response = await withTimeout(
-      fetch("https://ipwho.is/", { method: "GET", cache: "no-store" }),
-      1200
-    );
-    if (!response.ok) throw new Error("geo request failed");
-    const data = await response.json();
-    if (!data || data.success === false) throw new Error("geo not available");
-
-    return {
-      country: data.country || null,
-      region: data.region || null,
-      city: data.city || null,
-      latitude: typeof data.latitude === "number" ? data.latitude : null,
-      longitude: typeof data.longitude === "number" ? data.longitude : null,
-    };
-  } catch {
-    return {
-      country: null,
-      region: null,
-      city: null,
-      latitude: null,
-      longitude: null,
-    };
-  }
+  return {
+    country: null,
+    region: null,
+    city: null,
+    latitude: null,
+    longitude: null,
+  };
 }
 
 export async function trackPageView(pathOverride?: string) {
   if (!metricsEnabled) return;
 
   try {
-    const geo = await resolveGeoSnapshot();
-
+    const path = pathOverride || currentPath();
     const payload = {
-      path: pathOverride || currentPath(),
+      path,
       page_title: document.title || null,
-      country: geo.country,
-      region: geo.region,
-      city: geo.city,
-      latitude: geo.latitude,
-      longitude: geo.longitude,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
       language: navigator.language || null,
       user_agent: navigator.userAgent || null,
@@ -135,9 +111,42 @@ export async function trackPageView(pathOverride?: string) {
       referrer: document.referrer || null,
     };
 
-    await supabase.from("analytics_visits").insert(payload);
+    // Preferred path: server-side Edge Function enriches country/city from request IP.
+    const fxResp = await withTimeout(
+      fetch(`${SUPABASE_URL}/functions/v1/metrics-track`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+      }),
+      1800
+    );
+
+    if (!fxResp.ok) throw new Error(`metrics-track failed (${fxResp.status})`);
   } catch {
-    // Never block UX if metrics fail.
+    // Fallback path: still record raw visit without geo if function isn't deployed yet.
+    try {
+      const geo = await resolveGeoSnapshot();
+      await supabase.from("analytics_visits").insert({
+        path: pathOverride || currentPath(),
+        page_title: document.title || null,
+        country: geo.country,
+        region: geo.region,
+        city: geo.city,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+        language: navigator.language || null,
+        user_agent: navigator.userAgent || null,
+        device_type: getDeviceType(),
+        referrer: document.referrer || null,
+      });
+    } catch {
+      // Never block UX if metrics fail.
+    }
   }
 }
 

@@ -69,7 +69,7 @@ const Gallery = () => {
         </div>
       </div>
 
-      <footer className="flex flex-col items-center gap-4 border-t border-white/10 py-20 text-center">
+      <footer className="flex flex-col items-center gap-4 border-t border-white/10 pt-20 pb-32 md:pb-20 text-center">
         <p
           onClick={() => window.dispatchEvent(new Event("af-admin-secret-click"))}
           className="cursor-default text-xs uppercase tracking-widest text-gray-500"
@@ -82,7 +82,7 @@ const Gallery = () => {
           rel="noopener noreferrer"
           className="text-[10px] uppercase tracking-widest text-white/20 transition-colors hover:text-white/60"
         >
-          Developed by M2AQ
+          Developed by m2aq
         </a>
       </footer>
 
