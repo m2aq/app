@@ -27,6 +27,27 @@ function getClientIp(req: Request) {
   return null;
 }
 
+function getGeoFromHeaders(req: Request) {
+  const country =
+    req.headers.get("cf-ipcountry") ||
+    req.headers.get("x-vercel-ip-country") ||
+    req.headers.get("x-country-code") ||
+    null;
+  const region =
+    req.headers.get("x-vercel-ip-country-region") ||
+    req.headers.get("x-region-code") ||
+    null;
+  const city = req.headers.get("x-vercel-ip-city") || req.headers.get("x-city") || null;
+
+  return {
+    country,
+    region,
+    city,
+    latitude: null as number | null,
+    longitude: null as number | null,
+  };
+}
+
 function isPublicIp(ip: string | null) {
   if (!ip) return false;
   if (ip.includes(":")) return true;
@@ -38,7 +59,44 @@ function isPublicIp(ip: string | null) {
   return true;
 }
 
-async function resolveGeoByIp(ip: string | null) {
+async function resolveGeoWithIpWho(ip: string) {
+  const response = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, {
+    headers: { accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`ipwho error ${response.status}`);
+  const data = await response.json();
+  if (!data || data.success === false) throw new Error("ipwho unavailable");
+  return {
+    country: data.country || null,
+    region: data.region || null,
+    city: data.city || null,
+    latitude: typeof data.latitude === "number" ? data.latitude : null,
+    longitude: typeof data.longitude === "number" ? data.longitude : null,
+  };
+}
+
+async function resolveGeoWithIpApi(ip: string) {
+  const response = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, {
+    headers: { accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`ipapi error ${response.status}`);
+  const data = await response.json();
+  if (!data || data.error) throw new Error("ipapi unavailable");
+  return {
+    country: data.country_name || data.country || null,
+    region: data.region || null,
+    city: data.city || null,
+    latitude: typeof data.latitude === "number" ? data.latitude : null,
+    longitude: typeof data.longitude === "number" ? data.longitude : null,
+  };
+}
+
+async function resolveGeoByIp(req: Request, ip: string | null) {
+  const headerGeo = getGeoFromHeaders(req);
+  if (headerGeo.country || headerGeo.region || headerGeo.city) {
+    return headerGeo;
+  }
+
   if (!isPublicIp(ip)) {
     return {
       country: null as string | null,
@@ -50,28 +108,19 @@ async function resolveGeoByIp(ip: string | null) {
   }
 
   try {
-    const response = await fetch(`https://ipwho.is/${encodeURIComponent(ip as string)}`, {
-      headers: { accept: "application/json" },
-    });
-    if (!response.ok) throw new Error(`geo provider error ${response.status}`);
-    const data = await response.json();
-    if (!data || data.success === false) throw new Error("geo provider unavailable");
-
-    return {
-      country: data.country || null,
-      region: data.region || null,
-      city: data.city || null,
-      latitude: typeof data.latitude === "number" ? data.latitude : null,
-      longitude: typeof data.longitude === "number" ? data.longitude : null,
-    };
+    return await resolveGeoWithIpWho(ip as string);
   } catch {
-    return {
-      country: null as string | null,
-      region: null as string | null,
-      city: null as string | null,
-      latitude: null as number | null,
-      longitude: null as number | null,
-    };
+    try {
+      return await resolveGeoWithIpApi(ip as string);
+    } catch {
+      return {
+        country: null as string | null,
+        region: null as string | null,
+        city: null as string | null,
+        latitude: null as number | null,
+        longitude: null as number | null,
+      };
+    }
   }
 }
 
@@ -103,7 +152,7 @@ Deno.serve(async (req) => {
 
     const payload = (await req.json()) as VisitPayload;
     const ip = getClientIp(req);
-    const geo = await resolveGeoByIp(ip);
+    const geo = await resolveGeoByIp(req, ip);
 
     const insertData = {
       path: payload.path || "/",
@@ -142,4 +191,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
