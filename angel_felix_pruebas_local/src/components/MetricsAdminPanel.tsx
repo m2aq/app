@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import L from "leaflet";
+import { MapContainer, Marker, TileLayer, Tooltip } from "react-leaflet";
 import {
   adminSignIn,
   adminSignOut,
@@ -12,6 +14,11 @@ import {
 
 const SECRET_CLICKS_REQUIRED = 5;
 const SECRET_CLICK_WINDOW_MS = 1800;
+const MAP_BOUNDS: [[number, number], [number, number]] = [
+  [-75, -180],
+  [85, 180],
+];
+
 const fmtDate = (value: string) =>
   new Date(value).toLocaleString("en-US", {
     year: "numeric",
@@ -20,6 +27,31 @@ const fmtDate = (value: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+type GeoHotspot = {
+  key: string;
+  lat: number;
+  lon: number;
+  count: number;
+  country: string;
+  city: string;
+};
+
+const createPulseIcon = (count: number) => {
+  const core = Math.min(16, 8 + Math.floor(count / 3));
+  const ring = Math.min(36, 16 + count * 3);
+  return L.divIcon({
+    className: "af-geo-pulse-icon",
+    html: `
+      <div style="position:relative;width:${ring}px;height:${ring}px;transform:translate(-50%,-50%);">
+        <span style="position:absolute;inset:0;border-radius:999px;background:rgba(34,211,238,.20);border:1px solid rgba(103,232,249,.85);animation:afPulse 1.8s ease-out infinite;"></span>
+        <span style="position:absolute;left:50%;top:50%;width:${core}px;height:${core}px;border-radius:999px;transform:translate(-50%,-50%);background:rgba(103,232,249,.95);box-shadow:0 0 14px rgba(34,211,238,.95);border:1px solid rgba(255,255,255,.9);"></span>
+      </div>
+    `,
+    iconSize: [ring, ring],
+    iconAnchor: [ring / 2, ring / 2],
+  });
+};
 
 const MetricsAdminPanel = () => {
   const [secretClicks, setSecretClicks] = useState(0);
@@ -60,9 +92,7 @@ const MetricsAdminPanel = () => {
 
   useEffect(() => {
     isAdminSessionActive().then((active) => {
-      if (active) {
-        setIsAuthed(true);
-      }
+      if (active) setIsAuthed(true);
     });
   }, []);
 
@@ -71,13 +101,11 @@ const MetricsAdminPanel = () => {
       setLoadError("Metrics are disabled because Supabase config is missing.");
       return;
     }
+
     try {
       setLoading(true);
       setLoadError("");
-      const [visitsResult, leadsResult] = await Promise.all([
-        fetchRecentVisits(150),
-        fetchBookingLeads(150),
-      ]);
+      const [visitsResult, leadsResult] = await Promise.all([fetchRecentVisits(500), fetchBookingLeads(150)]);
       setRows(visitsResult);
       setLeads(leadsResult);
     } catch (err) {
@@ -88,15 +116,11 @@ const MetricsAdminPanel = () => {
   }, []);
 
   useEffect(() => {
-    if (isOpen && isAuthed) {
-      loadVisits();
-    }
+    if (isOpen && isAuthed) loadVisits();
   }, [isOpen, isAuthed, loadVisits]);
 
   const summary = useMemo(() => {
-    const now = Date.now();
-    const oneDayAgo = now - 24 * 60 * 60 * 1000;
-
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const total = rows.length;
     const last24h = rows.filter((r) => new Date(r.created_at).getTime() >= oneDayAgo).length;
     const uniqueCountries = new Set(rows.map((r) => r.country || "Unknown")).size;
@@ -106,6 +130,7 @@ const MetricsAdminPanel = () => {
       const country = r.country || "Unknown";
       countryCount.set(country, (countryCount.get(country) || 0) + 1);
     });
+
     let topCountry = "Unknown";
     let topCount = 0;
     countryCount.forEach((count, country) => {
@@ -125,6 +150,37 @@ const MetricsAdminPanel = () => {
     const redirected = leads.filter((l) => l.status === "stripe_redirected").length;
     return { total, captured, paid, redirected };
   }, [leads]);
+
+  const radarPoints = useMemo(() => {
+    const buckets = new Map<string, GeoHotspot>();
+
+    rows.forEach((row) => {
+      if (typeof row.latitude !== "number" || typeof row.longitude !== "number") return;
+      if (row.latitude < -90 || row.latitude > 90 || row.longitude < -180 || row.longitude > 180) return;
+
+      const bucketLat = Math.round(row.latitude * 2) / 2;
+      const bucketLon = Math.round(row.longitude * 2) / 2;
+      const key = `${bucketLat}_${bucketLon}`;
+      const country = row.country || "Unknown";
+      const city = row.city || "Unknown";
+
+      const existing = buckets.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        buckets.set(key, { key, lat: bucketLat, lon: bucketLon, count: 1, country, city });
+      }
+    });
+
+    return Array.from(buckets.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 180);
+  }, [rows]);
+
+  const totalVisitsWithCoords = useMemo(
+    () => rows.filter((row) => typeof row.latitude === "number" && typeof row.longitude === "number").length,
+    [rows]
+  );
 
   const submitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,6 +323,58 @@ const MetricsAdminPanel = () => {
               </p>
             ) : null}
 
+            <div className="mb-5 rounded-xl border border-cyan-300/20 bg-gradient-to-br from-slate-950 to-slate-900 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-cyan-200/70">Global Radar</p>
+                  <p className="text-sm text-white/70">
+                    {radarPoints.length} hotspots from {totalVisitsWithCoords} visits with geolocation
+                  </p>
+                </div>
+                <p className="text-xs text-cyan-100/70">Pulse = clustered traffic intensity</p>
+              </div>
+
+              <div className="relative mt-3 h-[360px] overflow-hidden rounded-lg border border-cyan-200/15 bg-slate-950">
+                <style>{`
+                  @keyframes afPulse {
+                    0% { transform: scale(0.7); opacity: .85; }
+                    70% { transform: scale(1.4); opacity: 0; }
+                    100% { transform: scale(1.55); opacity: 0; }
+                  }
+                `}</style>
+                <MapContainer
+                  className="h-full w-full"
+                  center={[20, 0]}
+                  zoom={2}
+                  minZoom={2}
+                  maxZoom={8}
+                  maxBounds={MAP_BOUNDS}
+                  worldCopyJump={true}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                  {radarPoints.map((point) => (
+                    <Marker key={point.key} position={[point.lat, point.lon]} icon={createPulseIcon(point.count)}>
+                      <Tooltip direction="top" offset={[0, -8]} opacity={0.92}>
+                        {point.country} · {point.city} ({point.count})
+                      </Tooltip>
+                    </Marker>
+                  ))}
+                </MapContainer>
+
+                {radarPoints.length === 0 ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white/70">
+                      No geolocation points yet.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
             <div className="overflow-x-auto rounded-xl border border-white/10">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-white/5 text-xs uppercase tracking-widest text-white/60">
@@ -302,9 +410,7 @@ const MetricsAdminPanel = () => {
                         <td className="px-3 py-3 text-white/80">{row.city || "Unknown"}</td>
                         <td className="px-3 py-3 text-white/80">{row.device_type || "-"}</td>
                         <td className="px-3 py-3 text-white/80">{row.language || "-"}</td>
-                        <td className="max-w-[16rem] truncate px-3 py-3 text-white/60">
-                          {row.referrer || "-"}
-                        </td>
+                        <td className="max-w-[16rem] truncate px-3 py-3 text-white/60">{row.referrer || "-"}</td>
                       </tr>
                     ))
                   )}

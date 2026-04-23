@@ -173,7 +173,7 @@ export async function trackPageView(pathOverride?: string) {
   }
 }
 
-export async function fetchRecentVisits(limit = 100): Promise<VisitRow[]> {
+export async function fetchRecentVisits(limit = 500): Promise<VisitRow[]> {
   const { data, error } = await supabase
     .from("analytics_visits")
     .select(
