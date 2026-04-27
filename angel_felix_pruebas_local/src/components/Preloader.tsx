@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "@/assets/logo-angel-felix.png";
+import logo from "@/assets/logo-new.jpg";
 
 const Preloader = () => {
   const [isLoading, setIsLoading] = useState(true);
