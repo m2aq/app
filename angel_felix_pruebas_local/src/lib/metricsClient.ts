@@ -176,26 +176,8 @@ export async function trackPageView(pathOverride?: string) {
     }
     if (!fxResp.ok) throw new Error(`metrics-track failed (${fxResp.status})`);
   } catch {
-    // Fallback path: record minimal visit without invented city/region.
-    try {
-      const geo = await resolveGeoSnapshot();
-      await supabase.from("analytics_visits").insert({
-        path: pathOverride || currentPath(),
-        page_title: document.title || null,
-        country: geo.country,
-        region: geo.region,
-        city: geo.city,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
-        language: navigator.language || null,
-        user_agent: navigator.userAgent || null,
-        device_type: getDeviceType(),
-        referrer: document.referrer || null,
-      });
-    } catch {
-      // Never block UX if metrics fail.
-    }
+    // Keep data quality strict: if server-side geo capture fails, skip visit insert.
+    // This avoids storing inferred city/region rows that look "real" but have null coords.
   }
 }
 
