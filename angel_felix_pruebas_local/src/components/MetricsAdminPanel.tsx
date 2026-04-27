@@ -17,6 +17,7 @@ const MAP_BOUNDS: [[number, number], [number, number]] = [
   [-75, -180],
   [85, 180],
 ];
+const VISITS_PAGE_SIZE = 50;
 
 const fmtDate = (value: string) =>
   new Date(value).toLocaleString("en-US", {
@@ -63,6 +64,7 @@ const MetricsAdminPanel = () => {
   const [rows, setRows] = useState<VisitRow[]>([]);
   const [leads, setLeads] = useState<BookingLeadRow[]>([]);
   const [loadError, setLoadError] = useState("");
+  const [visibleVisitsCount, setVisibleVisitsCount] = useState(VISITS_PAGE_SIZE);
 
   useEffect(() => {
     isAdminSessionActive()
@@ -81,6 +83,7 @@ const MetricsAdminPanel = () => {
       setLoadError("");
       const [visitsResult, leadsResult] = await Promise.all([fetchRecentVisits(500), fetchBookingLeads(150)]);
       setRows(visitsResult);
+      setVisibleVisitsCount(VISITS_PAGE_SIZE);
       setLeads(leadsResult);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Failed to load visits.");
@@ -383,7 +386,7 @@ const MetricsAdminPanel = () => {
                   </td>
                 </tr>
               ) : (
-                rows.map((row) => (
+                rows.slice(0, visibleVisitsCount).map((row) => (
                   <tr key={row.id} className="border-t border-white/10">
                     <td className="px-3 py-3 text-white/80">{fmtDate(row.created_at)}</td>
                     <td className="px-3 py-3 text-white/90">{row.path}</td>
@@ -398,6 +401,16 @@ const MetricsAdminPanel = () => {
             </tbody>
           </table>
         </div>
+        {!loading && rows.length > visibleVisitsCount ? (
+          <div className="mt-3 flex justify-center">
+            <button
+              onClick={() => setVisibleVisitsCount((prev) => prev + VISITS_PAGE_SIZE)}
+              className="rounded-lg border border-white/20 px-4 py-2 text-xs uppercase tracking-widest text-white/80"
+            >
+              Load More (+50)
+            </button>
+          </div>
+        ) : null}
 
         <div className="mt-6 overflow-x-auto rounded-xl border border-white/10">
           <table className="min-w-full text-left text-sm">

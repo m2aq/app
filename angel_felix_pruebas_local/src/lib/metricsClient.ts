@@ -158,7 +158,7 @@ export async function trackPageView(pathOverride?: string) {
     };
 
     // Preferred path: server-side Edge Function enriches country/city from request IP.
-    const fxResp = await withTimeout(
+    const requestMetricsTrack = () =>
       fetch(`${SUPABASE_URL}/functions/v1/metrics-track`, {
         method: "POST",
         headers: {
@@ -167,13 +167,16 @@ export async function trackPageView(pathOverride?: string) {
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(payload),
-      }),
-      6000
-    );
+      });
 
+    let fxResp = await withTimeout(requestMetricsTrack(), 12000);
+    if (!fxResp.ok) {
+      // Single retry for transient cold starts/network blips.
+      fxResp = await withTimeout(requestMetricsTrack(), 12000);
+    }
     if (!fxResp.ok) throw new Error(`metrics-track failed (${fxResp.status})`);
   } catch {
-    // Fallback path: still record raw visit without geo if function isn't deployed yet.
+    // Fallback path: record minimal visit without invented city/region.
     try {
       const geo = await resolveGeoSnapshot();
       await supabase.from("analytics_visits").insert({
