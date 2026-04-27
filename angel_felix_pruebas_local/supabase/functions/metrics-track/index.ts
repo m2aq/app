@@ -144,16 +144,25 @@ async function resolveGeoWithIpApiNoHint() {
 
 async function resolveGeoByIp(req: Request, ip: string | null) {
   const headerGeo = getGeoFromHeaders(req);
-  if (headerGeo.country || headerGeo.region || headerGeo.city) {
+  // Only trust header geo as final when we actually have city/region detail.
+  // Some edges provide only country code in headers, which is not enough.
+  if (headerGeo.region || headerGeo.city) {
     return headerGeo;
   }
 
   if (!isPublicIp(ip)) {
     try {
-      return await resolveGeoWithIpApiNoHint();
+      const geo = await resolveGeoWithIpApiNoHint();
+      return {
+        country: geo.country || headerGeo.country,
+        region: geo.region,
+        city: geo.city,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+      };
     } catch {
       return {
-        country: null as string | null,
+        country: headerGeo.country || (null as string | null),
         region: null as string | null,
         city: null as string | null,
         latitude: null as number | null,
@@ -163,16 +172,37 @@ async function resolveGeoByIp(req: Request, ip: string | null) {
   }
 
   try {
-    return await resolveGeoWithIpWho(ip as string);
+    const geo = await resolveGeoWithIpWho(ip as string);
+    return {
+      country: geo.country || headerGeo.country,
+      region: geo.region,
+      city: geo.city,
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+    };
   } catch {
     try {
-      return await resolveGeoWithIpApi(ip as string);
+      const geo = await resolveGeoWithIpApi(ip as string);
+      return {
+        country: geo.country || headerGeo.country,
+        region: geo.region,
+        city: geo.city,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+      };
     } catch {
       try {
-        return await resolveGeoWithIpApiNoHint();
+        const geo = await resolveGeoWithIpApiNoHint();
+        return {
+          country: geo.country || headerGeo.country,
+          region: geo.region,
+          city: geo.city,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+        };
       } catch {
         return {
-          country: null as string | null,
+          country: headerGeo.country || (null as string | null),
           region: null as string | null,
           city: null as string | null,
           latitude: null as number | null,
