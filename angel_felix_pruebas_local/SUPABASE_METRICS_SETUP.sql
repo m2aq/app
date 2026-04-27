@@ -26,11 +26,23 @@ create table if not exists public.booking_leads (
   email text not null,
   phone text not null,
   hunt text not null,
+  country text,
+  region text,
+  city text,
+  latitude double precision,
+  longitude double precision,
   source_path text,
   status text not null default 'lead_captured',
   payment_provider text,
   payment_ref text
 );
+
+alter table public.booking_leads
+  add column if not exists country text,
+  add column if not exists region text,
+  add column if not exists city text,
+  add column if not exists latitude double precision,
+  add column if not exists longitude double precision;
 
 create index if not exists booking_leads_created_at_idx on public.booking_leads (created_at desc);
 create index if not exists booking_leads_status_idx on public.booking_leads (status);

@@ -6,13 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type VisitPayload = {
-  path?: string;
-  page_title?: string | null;
+type LeadPayload = {
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  hunt?: string;
+  source_path?: string | null;
   timezone?: string | null;
   language?: string | null;
   user_agent?: string | null;
-  device_type?: string | null;
   referrer?: string | null;
 };
 
@@ -49,22 +51,6 @@ function inferCountryFromLocale(language: string | null, timezone: string | null
     if (tz.includes("toronto") || tz.includes("vancouver")) return "Canada";
   }
   return null;
-}
-
-function inferRegionCityFromTimezone(timezone: string | null) {
-  if (!timezone) return { region: null as string | null, city: null as string | null };
-  const tz = timezone.toLowerCase();
-  if (tz.includes("hermosillo")) return { region: "Sonora", city: "Hermosillo" };
-  if (tz.includes("mexico_city")) return { region: "CDMX", city: "Mexico City" };
-  if (tz.includes("monterrey")) return { region: "Nuevo Leon", city: "Monterrey" };
-  if (tz.includes("tijuana")) return { region: "Baja California", city: "Tijuana" };
-  if (tz.includes("phoenix")) return { region: "Arizona", city: "Phoenix" };
-  if (tz.includes("los_angeles")) return { region: "California", city: "Los Angeles" };
-  if (tz.includes("chicago")) return { region: "Illinois", city: "Chicago" };
-  if (tz.includes("new_york")) return { region: "New York", city: "New York" };
-  if (tz.includes("toronto")) return { region: "Ontario", city: "Toronto" };
-  if (tz.includes("vancouver")) return { region: "British Columbia", city: "Vancouver" };
-  return { region: null as string | null, city: null as string | null };
 }
 
 function getClientIp(req: Request) {
@@ -197,35 +183,43 @@ Deno.serve(async (req) => {
       });
     }
 
+    const payload = (await req.json()) as LeadPayload;
+    const fullName = payload.full_name?.trim() || "";
+    const email = payload.email?.trim() || "";
+    const phone = payload.phone?.trim() || "";
+    const hunt = payload.hunt?.trim() || "General Deposit";
+
+    if (!fullName || !email || !phone) {
+      return new Response(JSON.stringify({ error: "Missing lead fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const ip = getClientIp(req);
+    const geo = await resolveGeoByIp(req, ip);
+    const inferredCountry = inferCountryFromLocale(payload.language || null, payload.timezone || null);
+    const finalCountry = normalizeCountry(geo.country) || inferredCountry;
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const payload = (await req.json()) as VisitPayload;
-    const ip = getClientIp(req);
-    const geo = await resolveGeoByIp(req, ip);
-    const inferredCountry = inferCountryFromLocale(payload.language || null, payload.timezone || null);
-    const inferredRegionCity = inferRegionCityFromTimezone(payload.timezone || null);
-    const finalCountry = normalizeCountry(geo.country) || inferredCountry;
-    const finalRegion = geo.region || inferredRegionCity.region;
-    const finalCity = geo.city || inferredRegionCity.city;
-
     const insertData = {
-      path: payload.path || "/",
-      page_title: payload.page_title || null,
+      full_name: fullName,
+      email,
+      phone,
+      hunt,
       country: finalCountry,
-      region: finalRegion,
-      city: finalCity,
+      region: geo.region,
+      city: geo.city,
       latitude: geo.latitude,
       longitude: geo.longitude,
-      timezone: payload.timezone || null,
-      language: payload.language || null,
-      user_agent: payload.user_agent || req.headers.get("user-agent") || null,
-      device_type: payload.device_type || null,
-      referrer: payload.referrer || req.headers.get("referer") || null,
+      source_path: payload.source_path || null,
+      status: "lead_captured",
     };
 
-    const { error } = await supabase.from("analytics_visits").insert(insertData);
+    const { error } = await supabase.from("booking_leads").insert(insertData);
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
@@ -247,3 +241,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+
