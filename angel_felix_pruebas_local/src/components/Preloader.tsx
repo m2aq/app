@@ -66,6 +66,9 @@ const Preloader = () => {
               <motion.img
                 src={logo}
                 alt="Angel Felix Hunting"
+                width={1536}
+                height={1024}
+                decoding="async"
                 className="relative z-10 w-48 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] md:w-64"
                 animate={{ filter: ["brightness(1)", "brightness(1.2)", "brightness(1)"] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}

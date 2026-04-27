@@ -27,7 +27,10 @@ const ContactSection = () => {
         <motion.img
           src={logo}
           alt="Angel Felix Outfitter"
-          className="mx-auto mb-8 h-72 w-auto opacity-60 md:h-[22rem]"
+          width={1536}
+          height={1024}
+          decoding="async"
+          className="mx-auto mb-8 h-auto w-72 max-w-full opacity-60 md:w-[33rem]"
           style={{ opacity: useTransform(scrollYProgress, [0, 0.3], [0, 0.6]), scale }}
         />
 
@@ -94,6 +97,9 @@ const ContactSection = () => {
             <img
               src={`${import.meta.env.BASE_URL}sci_vector.svg`}
               alt="Safari Club International"
+              width={1599}
+              height={864}
+              decoding="async"
               className="h-auto w-full max-w-[16rem] opacity-90 md:max-w-[20rem]"
             />
             <p className="max-w-xl font-body text-sm leading-relaxed text-muted-foreground">

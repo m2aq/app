@@ -71,7 +71,7 @@ const HuntItem = ({ hunt, index, onBookNow }: { hunt: HuntItemData; index: numbe
   return (
     <div
       ref={ref}
-      className={`flex min-h-screen snap-section flex-col items-center justify-center gap-8 px-4 py-20 lg:gap-16 ${!isEven ? "lg:flex-row-reverse" : "lg:flex-row"}`}
+      className={`relative flex min-h-screen snap-section flex-col items-center justify-center gap-8 px-4 py-20 lg:gap-16 ${!isEven ? "lg:flex-row-reverse" : "lg:flex-row"}`}
     >
       {/* Image Side */}
       <motion.div

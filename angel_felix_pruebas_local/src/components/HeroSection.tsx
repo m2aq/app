@@ -66,7 +66,11 @@ const HeroSection = ({ onBookNow }: HeroSectionProps) => {
           <img
             src={logo}
             alt="Angel Felix Outfitter"
-            className="w-72 md:w-[32rem] drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] drop-shadow-[0_0_45px_rgba(255,255,255,0.5)] drop-shadow-[0_0_100px_rgba(255,255,255,0.3)]" 
+            width={1536}
+            height={1024}
+            fetchpriority="high"
+            decoding="async"
+            className="h-auto w-72 md:w-[32rem] drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] drop-shadow-[0_0_45px_rgba(255,255,255,0.5)] drop-shadow-[0_0_100px_rgba(255,255,255,0.3)]" 
           />
         </motion.div>
 
