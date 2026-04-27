@@ -126,6 +126,22 @@ async function resolveGeoWithIpApi(ip: string) {
   };
 }
 
+async function resolveGeoWithIpApiNoHint() {
+  const response = await fetch("https://ipapi.co/json/", {
+    headers: { accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`ipapi(no-hint) error ${response.status}`);
+  const data = await response.json();
+  if (!data || data.error) throw new Error("ipapi(no-hint) unavailable");
+  return {
+    country: data.country_name || data.country || null,
+    region: data.region || null,
+    city: data.city || null,
+    latitude: typeof data.latitude === "number" ? data.latitude : null,
+    longitude: typeof data.longitude === "number" ? data.longitude : null,
+  };
+}
+
 async function resolveGeoByIp(req: Request, ip: string | null) {
   const headerGeo = getGeoFromHeaders(req);
   if (headerGeo.country || headerGeo.region || headerGeo.city) {
@@ -133,20 +149,8 @@ async function resolveGeoByIp(req: Request, ip: string | null) {
   }
 
   if (!isPublicIp(ip)) {
-    return {
-      country: null as string | null,
-      region: null as string | null,
-      city: null as string | null,
-      latitude: null as number | null,
-      longitude: null as number | null,
-    };
-  }
-
-  try {
-    return await resolveGeoWithIpWho(ip as string);
-  } catch {
     try {
-      return await resolveGeoWithIpApi(ip as string);
+      return await resolveGeoWithIpApiNoHint();
     } catch {
       return {
         country: null as string | null,
@@ -155,6 +159,26 @@ async function resolveGeoByIp(req: Request, ip: string | null) {
         latitude: null as number | null,
         longitude: null as number | null,
       };
+    }
+  }
+
+  try {
+    return await resolveGeoWithIpWho(ip as string);
+  } catch {
+    try {
+      return await resolveGeoWithIpApi(ip as string);
+    } catch {
+      try {
+        return await resolveGeoWithIpApiNoHint();
+      } catch {
+        return {
+          country: null as string | null,
+          region: null as string | null,
+          city: null as string | null,
+          latitude: null as number | null,
+          longitude: null as number | null,
+        };
+      }
     }
   }
 }
