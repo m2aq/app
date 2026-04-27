@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import logo from "@/assets/logo-new.jpg";
+import logo from "@/assets/logo-angel-felix.png";
 
 const ContactSection = () => {
   const ref = useRef<HTMLDivElement>(null);
